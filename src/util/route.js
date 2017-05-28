@@ -11,6 +11,12 @@ export function createRoute (
   redirectedFrom?: ?Location,
   router?: VueRouter
 ): Route {
+  // start by parsing location.params
+  // (i) this will update `location.params` key
+  if (location.params !== undefined) {
+    parseParams(record, location);
+  }
+
   const stringifyQuery = router && router.options.stringifyQuery
   const route: Route = {
     name: location.name || (record && record.name),
@@ -26,6 +32,28 @@ export function createRoute (
     route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery)
   }
   return Object.freeze(route)
+}
+
+function parseParams (record, location) {
+  let keys = record.regex.keys;
+
+  // loop the regex keys and set a default value if the key is optional and the pattern is a real string(not a regex)
+  // eg. key = {name: 'action', optional: true, pattern: 'index', ...}
+  // set location.params.action to 'index'
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
+
+    if (key.optional && /[A-Za-z0-9]+/.test(key.pattern)) {
+      location.params[key.name] = key.pattern;
+    }
+  }
+
+  // parse rawParams if exists
+  // TODO:
+  // nested parse for named params
+  if (location.params.rawParams !== undefined) {
+    location.params.parsedParams = location.params.rawParams.split('/');
+  }
 }
 
 // the starting route that represents the initial state
