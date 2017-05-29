@@ -35,6 +35,11 @@ export function createRoute (
 }
 
 function parseParams (record, location) {
+  // parse params only if record isn't null
+  if (record === null) {
+    return;  
+  }
+  
   let keys = record.regex.keys;
 
   // loop the regex keys and set a default value if the key is optional and the pattern is a real string(not a regex)
