@@ -231,6 +231,12 @@ function createRoute (
   redirectedFrom,
   router
 ) {
+  // start by parsing location.params
+  // (i) this will update `location.params` key
+  if (location.params !== undefined) {
+    parseParams(record, location);
+  }
+
   var stringifyQuery$$1 = router && router.options.stringifyQuery;
   var route = {
     name: location.name || (record && record.name),
@@ -246,6 +252,33 @@ function createRoute (
     route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery$$1);
   }
   return Object.freeze(route)
+}
+
+function parseParams (record, location) {
+  // parse params only if record isn't null
+  if (record === null) {
+    return;  
+  }
+  
+  var keys = record.regex.keys;
+
+  // loop the regex keys and set a default value if the key is optional and the pattern is a real string(not a regex)
+  // eg. key = {name: 'action', optional: true, pattern: 'index', ...}
+  // set location.params.action to 'index'
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+
+    if (key.optional && /[A-Za-z0-9]+/.test(key.pattern)) {
+      location.params[key.name] = key.pattern;
+    }
+  }
+
+  // parse rawParams if exists
+  // TODO:
+  // nested parse for named params
+  if (location.params.rawParams !== undefined) {
+    location.params.parsedParams = location.params.rawParams.split('/');
+  }
 }
 
 // the starting route that represents the initial state
